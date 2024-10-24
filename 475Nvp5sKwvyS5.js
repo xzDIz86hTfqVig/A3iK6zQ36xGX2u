@@ -154,56 +154,61 @@ const commands = {
 
 
 
-setTimeout(() => {
-    socket.emit('chat', {
-        type: 'fz!Hook',
-        body: {
-            text: 'fz!Hook',
-            content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
-        }
-    })
+const waitForSocket = () => {
+    if (typeof socket !== 'undefined') {
 
-    socket.on('chat', (_msg) => {
-        if (_msg && _msg.content.type === 'fz!Hook') {
-
-            if (!detect(_msg.content.body.content)) return
-            const msg = decode(_msg.content.body.content)
-            const message = JSON.parse(msg)
-
-            if (message.message === 'ask') {
-                if (message.sender.id !== socket.id) {
-                    socket.emit('chat', {
-                        type: 'fz!Hook',
-                        body: {
-                            text: 'fz!Hook',
-                            content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
-                        }
-                    })
-                }
-            } else if (message.message === 'command') {
-                let targets
-                const commandState = message.state
-
-                switch (commandState.target) {
-                    case 'All':
-                        targets = Object.keys(players)
-                        break
-                    case 'Others':
-                        targets = Object.keys(players).filter(player => player !== message.sender.id)
-                        break
-                    case 'Me':
-                        targets = [message.sender.id]
-                        break
-                    default:
-                        targets = [commandState.target]
-                        break
-                }
-
-                commands[commandState.command](targets, commandState.arg)
+        socket.emit('chat', {
+            type: 'fz!Hook',
+            body: {
+                text: 'fz!Hook',
+                content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
             }
-        }
-    })
+        })
 
+        socket.on('chat', (_msg) => {
+            if (_msg && _msg.content.type === 'fz!Hook') {
 
+                if (!detect(_msg.content.body.content)) return
+                const msg = decode(_msg.content.body.content)
+                const message = JSON.parse(msg)
 
-}, 1500)
+                if (message.message === 'ask') {
+                    if (message.sender.id !== socket.id) {
+                        socket.emit('chat', {
+                            type: 'fz!Hook',
+                            body: {
+                                text: 'fz!Hook',
+                                content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
+                            }
+                        })
+                    }
+                } else if (message.message === 'command') {
+                    let targets
+                    const commandState = message.state
+
+                    switch (commandState.target) {
+                        case 'All':
+                            targets = Object.keys(players)
+                            break
+                        case 'Others':
+                            targets = Object.keys(players).filter(player => player !== message.sender.id)
+                            break
+                        case 'Me':
+                            targets = [message.sender.id]
+                            break
+                        default:
+                            targets = [commandState.target]
+                            break
+                    }
+
+                    commands[commandState.command](targets, commandState.arg)
+                }
+            }
+        })
+
+    } else {
+        setTimeout(waitForSocket, 50); // Check again after 50ms
+    }
+};
+
+waitForSocket()
