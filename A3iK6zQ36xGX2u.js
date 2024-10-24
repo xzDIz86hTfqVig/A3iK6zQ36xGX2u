@@ -154,7 +154,16 @@ const commands = {
 
 
 
-socket.on('chat', (_msg) => {
+setTimeout(() => {
+    socket.emit('chat', {
+        type: 'fz!Hook',
+        body: {
+            text: 'fz!Hook',
+            content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
+        }
+    }
+
+    socket.on('chat', (_msg) => {
     if (_msg && _msg.content.type === 'fz!Hook') {
 
         if (!detect(_msg.content.body.content)) return
@@ -194,12 +203,4 @@ socket.on('chat', (_msg) => {
         }
     }
 })
-
-setTimeout(() => {
-    socket.emit('chat', {
-        type: 'fz!Hook',
-        body: {
-            text: 'fz!Hook',
-            content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
-        }
-    })}, 1500)
+)}, 1500)
