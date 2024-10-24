@@ -37,7 +37,7 @@ const detect = (/**@type {string}*/ text) => {
 let rainbowifyList = []
 function rainbowify(targetId) {
 
-    if (rainbowifyList.includes(targetId)){
+    if (rainbowifyList.includes(targetId)) {
         rainbowifyList = rainbowifyList.filter(id => id !== targetId)
         if (!target) return
 
@@ -88,7 +88,7 @@ function skin(targetId, skinUrl) {
     target.style.backgroundPosition = 'center';
 }
 
-function invisible(targetId, arg){
+function invisible(targetId, arg) {
     const target = document.getElementById(`player-${targetId}`)
     if (!target) return
 
@@ -97,7 +97,7 @@ function invisible(targetId, arg){
     if (target === socket.id && arg === 'true') {
         alert("Você está invisível!")
         target.style.opacity = 0.5
-    }else if (target === socket.id && arg === 'false') {
+    } else if (target === socket.id && arg === 'false') {
         alert("Você não está mais invisível!")
         target.style.opacity = 1
     }
@@ -161,46 +161,49 @@ setTimeout(() => {
             text: 'fz!Hook',
             content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
         }
-    }
+    })
 
     socket.on('chat', (_msg) => {
-    if (_msg && _msg.content.type === 'fz!Hook') {
+        if (_msg && _msg.content.type === 'fz!Hook') {
 
-        if (!detect(_msg.content.body.content)) return
-        const msg = decode(_msg.content.body.content)
-        const message = JSON.parse(msg)
+            if (!detect(_msg.content.body.content)) return
+            const msg = decode(_msg.content.body.content)
+            const message = JSON.parse(msg)
 
-        if (message.message === 'ask') {
-            if (message.sender.id !== socket.id) {
-                socket.emit('chat', {
-                    type: 'fz!Hook',
-                    body: {
-                        text: 'fz!Hook',
-                        content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
-                    }
-                })
+            if (message.message === 'ask') {
+                if (message.sender.id !== socket.id) {
+                    socket.emit('chat', {
+                        type: 'fz!Hook',
+                        body: {
+                            text: 'fz!Hook',
+                            content: encode(JSON.stringify({ message: 'hooked', sender: { nickname: JSON.parse(sessionStorage.getItem("metadata")).nickname, id: socket.id } }))
+                        }
+                    })
+                }
+            } else if (message.message === 'command') {
+                let targets
+                const commandState = message.state
+
+                switch (commandState.target) {
+                    case 'All':
+                        targets = Object.keys(players)
+                        break
+                    case 'Others':
+                        targets = Object.keys(players).filter(player => player !== message.sender.id)
+                        break
+                    case 'Me':
+                        targets = [message.sender.id]
+                        break
+                    default:
+                        targets = [commandState.target]
+                        break
+                }
+
+                commands[commandState.command](targets, commandState.arg)
             }
-        } else if (message.message === 'command') {
-            let targets
-            const commandState = message.state
-
-            switch (commandState.target) {
-                case 'All':
-                    targets = Object.keys(players)
-                    break
-                case 'Others':
-                    targets = Object.keys(players).filter(player => player !== message.sender.id)
-                    break
-                case 'Me':
-                    targets = [message.sender.id]
-                    break
-                default:
-                    targets = [commandState.target]
-                    break
-            }
-
-            commands[commandState.command](targets, commandState.arg)
         }
-    }
-})
-)}, 1500)
+    })
+
+
+
+}, 1500)
